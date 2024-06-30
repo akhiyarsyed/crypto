@@ -1,0 +1,97 @@
+#include <stdio.h>
+#include <string.h>
+void findPosition(char matrix[5][5], char ch, int *row, int *col) {
+    if (ch == 'J')  // 'J' and 'I' are treated the same in Playfair cipher
+        ch = 'I';
+    for (*row = 0; *row < 5; (*row)++) {
+        for (*col = 0; *col < 5; (*col)++) {
+            if (matrix[*row][*col] == ch)
+                return;
+        }
+    }
+}
+void decryptPlayfair(char cipher[], char key[]) {
+    char matrix[5][5];
+    char plaintext[strlen(cipher)];
+    int i, j, k = 0;
+    int len = strlen(key);
+    int visited[26] = {0};  // To keep track of visited characters
+    int row, col;
+    for (i = 0; i < len; i++) {
+        if (key[i] == 'J')  // 'J' and 'I' are treated the same in Playfair cipher
+            key[i] = 'I';
+        if (!visited[key[i] - 'A']) {
+            visited[key[i] - 'A'] = 1;
+            matrix[k / 5][k % 5] = key[i];
+            k++;
+        }
+    }
+
+    // Fill the rest of the matrix with remaining letters
+    for (i = 0; i < 26; i++) {
+        if (visited[i] == 0) {
+            if (i == ('J' - 'A'))  // 'J' and 'I' are treated the same in Playfair cipher
+                continue;
+            matrix[k / 5][k % 5] = 'A' + i;
+            k++;
+        }
+    }
+
+    // Print the Playfair matrix for verification
+    printf("Playfair Matrix:\n");
+    for (i = 0; i < 5; i++) {
+        for (j = 0; j < 5; j++) {
+            printf("%c ", matrix[i][j]);
+        }
+        printf("\n");
+    }
+    printf("\n");
+
+    // Decrypt the ciphertext
+    int cipher_len = strlen(cipher);
+    for (i = 0; i < cipher_len; i += 2) {
+        char a = cipher[i];
+        char b = cipher[i + 1];
+        int row1, col1, row2, col2;
+
+        // Find positions in the matrix
+        findPosition(matrix, a, &row1, &col1);
+        findPosition(matrix, b, &row2, &col2);
+
+        if (row1 == row2) {
+            // Same row, shift left
+            plaintext[i] = matrix[row1][(col1 + 4) % 5];
+            plaintext[i + 1] = matrix[row2][(col2 + 4) % 5];
+        } else if (col1 == col2) {
+            // Same column, shift up
+            plaintext[i] = matrix[(row1 + 4) % 5][col1];
+            plaintext[i + 1] = matrix[(row2 + 4) % 5][col2];
+        } else {
+            // Form a rectangle, swap corners
+            plaintext[i] = matrix[row1][col2];
+            plaintext[i + 1] = matrix[row2][col1];
+        }
+    }
+
+    plaintext[cipher_len] = '\0';  // Null terminate the plaintext string
+    printf("Decrypted Message:\n%s\n", plaintext);
+}
+
+int main() {
+    char cipher[] = "KXJEY UREBE ZWEHE WRYTU HEYFS KREHE GOYFI WTTTU OLKSY CAJPO BOTEI ZONTX BYBNT GONEY CUZWR GDSON SXBOU YWRHE BAAHY USEDQ";
+    char key[] = "PLAYFAIR";
+
+    // Remove spaces from the cipher text
+    char cipher_no_spaces[sizeof(cipher)];
+    int j = 0;
+    for (int i = 0; i < sizeof(cipher); i++) {
+        if (cipher[i] != ' ') {
+            cipher_no_spaces[j++] = cipher[i];
+        }
+    }
+    cipher_no_spaces[j] = '\0';
+
+    decryptPlayfair(cipher_no_spaces, key);
+
+    return 0;
+}

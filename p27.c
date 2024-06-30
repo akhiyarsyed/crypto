@@ -1,0 +1,65 @@
+#include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
+#include <math.h>
+
+// Function to compute the modular exponentiation
+unsigned long long mod_exp(unsigned long long base, unsigned long long exp, unsigned long long mod) {
+    unsigned long long result = 1;
+    while (exp > 0) {
+        if (exp % 2 == 1) {
+            result = (result * base) % mod;
+        }
+        base = (base * base) % mod;
+        exp /= 2;
+    }
+    return result;
+}
+
+// Function to encrypt a character using RSA
+unsigned long long rsa_encrypt(char ch, unsigned long long e, unsigned long long n) {
+    unsigned long long m = ch - 'A';
+    return mod_exp(m, e, n);
+}
+
+// Function to decrypt a ciphertext using frequency analysis
+char frequency_analysis(unsigned long long ciphertext, unsigned long long *encrypted_chars) {
+    for (char ch = 'A'; ch <= 'Z'; ++ch) {
+        if (encrypted_chars[ch - 'A'] == ciphertext) {
+            return ch;
+        }
+    }
+    return '?'; // If character is not found
+}
+
+int main() {
+    unsigned long long n = 95163; // Example large n
+    unsigned long long e = 65537; // Commonly used public key exponent
+
+    char message[] = "HELLO"; // Example message
+    unsigned long long encrypted_message[strlen(message)];
+
+    // Encrypt the message
+    printf("Encrypted message:\n");
+    for (size_t i = 0; i < strlen(message); ++i) {
+        encrypted_message[i] = rsa_encrypt(message[i], e, n);
+        printf("%llu ", encrypted_message[i]);
+    }
+    printf("\n");
+
+    // Simulate a known encryption mapping for frequency analysis (for demonstration purposes)
+    unsigned long long encrypted_chars[26];
+    for (char ch = 'A'; ch <= 'Z'; ++ch) {
+        encrypted_chars[ch - 'A'] = rsa_encrypt(ch, e, n);
+    }
+
+    // Decrypt the message using frequency analysis
+    printf("Decrypted message:\n");
+    for (size_t i = 0; i < strlen(message); ++i) {
+        char decrypted_char = frequency_analysis(encrypted_message[i], encrypted_chars);
+        printf("%c", decrypted_char);
+    }
+    printf("\n");
+
+    return 0;
+}

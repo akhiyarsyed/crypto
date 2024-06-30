@@ -1,0 +1,83 @@
+#include <stdio.h>
+#include <stdint.h>
+#include <string.h>
+
+#define BLOCK_SIZE_64 8
+#define BLOCK_SIZE_128 16
+
+// XOR with constant Rb
+void xor_rb(uint8_t *block, int block_size) {
+    if (block_size == BLOCK_SIZE_64) {
+        block[block_size - 1] ^= 0x1B;
+    } else if (block_size == BLOCK_SIZE_128) {
+        block[block_size - 1] ^= 0x87;
+    }
+}
+
+// Left shift and conditional XOR
+void left_shift_and_xor(uint8_t *output, const uint8_t *input, int block_size) {
+    int carry = 0;
+    for (int i = block_size - 1; i >= 0; i--) {
+        int new_carry = input[i] & 0x80;
+        output[i] = (input[i] << 1) | (carry ? 1 : 0);
+        carry = new_carry;
+    }
+    if (carry) {
+        xor_rb(output, block_size);
+    }
+}
+
+// Example block cipher: XOR with key for simplicity
+void simple_block_cipher(uint8_t *output, const uint8_t *input, const uint8_t *key, int block_size) {
+    for (int i = 0; i < block_size; i++) {
+        output[i] = input[i] ^ key[i];
+    }
+}
+
+// Subkey generation for CMAC
+void generate_subkeys(uint8_t *K1, uint8_t *K2, const uint8_t *key, int block_size) {
+    uint8_t L[BLOCK_SIZE_128] = {0}; // max block size
+    uint8_t zero_block[BLOCK_SIZE_128] = {0};
+
+    // Encrypt the zero block to get L
+    simple_block_cipher(L, zero_block, key, block_size);
+
+    // Generate K1
+    left_shift_and_xor(K1, L, block_size);
+
+    // Generate K2
+    left_shift_and_xor(K2, K1, block_size);
+}
+
+void print_block(const uint8_t *block, int block_size) {
+    for (int i = 0; i < block_size; i++) {
+        printf("%02x", block[i]);
+    }
+    printf("\n");
+}
+
+int main() {
+    uint8_t key_64[BLOCK_SIZE_64] = {0x1, 0x2, 0x3, 0x4, 0x5, 0x6, 0x7, 0x8};
+    uint8_t key_128[BLOCK_SIZE_128] = {0x1, 0x2, 0x3, 0x4, 0x5, 0x6, 0x7, 0x8, 0x9, 0xa, 0xb, 0xc, 0xd, 0xe, 0xf, 0x10};
+
+    uint8_t K1_64[BLOCK_SIZE_64], K2_64[BLOCK_SIZE_64];
+    uint8_t K1_128[BLOCK_SIZE_128], K2_128[BLOCK_SIZE_128];
+
+    // Generate subkeys for 64-bit block size
+    generate_subkeys(K1_64, K2_64, key_64, BLOCK_SIZE_64);
+    printf("64-bit block size:\n");
+    printf("K1: ");
+    print_block(K1_64, BLOCK_SIZE_64);
+    printf("K2: ");
+    print_block(K2_64, BLOCK_SIZE_64);
+
+    // Generate subkeys for 128-bit block size
+    generate_subkeys(K1_128, K2_128, key_128, BLOCK_SIZE_128);
+    printf("128-bit block size:\n");
+    printf("K1: ");
+    print_block(K1_128, BLOCK_SIZE_128);
+    printf("K2: ");
+    print_block(K2_128, BLOCK_SIZE_128);
+
+    return 0;
+}

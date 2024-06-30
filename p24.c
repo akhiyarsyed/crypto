@@ -1,0 +1,80 @@
+#include <stdio.h>
+#include <stdint.h>
+
+// Function to compute gcd(a, b) using Euclid's algorithm
+uint32_t gcd(uint32_t a, uint32_t b) {
+    while (b != 0) {
+        uint32_t temp = b;
+        b = a % b;
+        a = temp;
+    }
+    return a;
+}
+
+// Function to compute the modular exponentiation a^b % c
+uint64_t modExp(uint64_t a, uint64_t b, uint64_t c) {
+    uint64_t result = 1;
+    a = a % c;
+    while (b > 0) {
+        if (b & 1) {
+            result = (result * a) % c;
+        }
+        b = b >> 1;
+        a = (a * a) % c;
+    }
+    return result;
+}
+
+// Function to find the modular multiplicative inverse of a modulo m using extended Euclidean algorithm
+uint32_t modInverse(uint32_t a, uint32_t m) {
+    uint32_t m0 = m, t, q;
+    uint32_t x0 = 0, x1 = 1;
+
+    if (m == 1) return 0;
+
+    while (a > 1) {
+        // q is quotient
+        q = a / m;
+
+        t = m;
+
+        // m is remainder now, process same as Euclid's algo
+        m = a % m, a = t;
+
+        t = x0;
+
+        x0 = x1 - q * x0;
+
+        x1 = t;
+    }
+
+    // Make x1 positive
+    if (x1 < 0) x1 += m0;
+
+    return x1;
+}
+
+int main() {
+    uint32_t e = 31;
+    uint32_t n = 3599;
+    uint32_t p, q;
+
+    // Find p and q (using trial division for simplicity here)
+    for (p = 2; p * p <= n; p++) {
+        if (n % p == 0) {
+            q = n / p;
+            break;
+        }
+    }
+
+    // Calculate Euler's totient function f(n)
+    uint32_t phi = (p - 1) * (q - 1);
+
+    // Find the modular multiplicative inverse of e modulo f(n)
+    uint32_t d = modInverse(e, phi);
+
+    // Output the private key (d)
+    printf("Private Key (d): %u\n", d);
+
+    return 0;
+}

@@ -1,0 +1,69 @@
+#include <stdio.h>
+#include <stdint.h>
+#include <string.h>
+
+// Define the block size and key size (in bytes)
+#define BLOCK_SIZE 16
+
+// Simple XOR-based block cipher for demonstration purposes
+void simple_block_cipher(uint8_t *output, const uint8_t *input, const uint8_t *key) {
+    for (int i = 0; i < BLOCK_SIZE; i++) {
+        output[i] = input[i] ^ key[i];
+    }
+}
+
+// Function to compute CBC-MAC
+void compute_cbc_mac(uint8_t *mac, const uint8_t *key, const uint8_t *message, int num_blocks) {
+    uint8_t state[BLOCK_SIZE] = {0};
+    uint8_t block[BLOCK_SIZE];
+
+    for (int i = 0; i < num_blocks; i++) {
+        for (int j = 0; j < BLOCK_SIZE; j++) {
+            block[j] = message[i * BLOCK_SIZE + j] ^ state[j];
+        }
+        simple_block_cipher(state, block, key);
+    }
+
+    memcpy(mac, state, BLOCK_SIZE);
+}
+
+// Utility function to XOR two blocks
+void xor_blocks(uint8_t *output, const uint8_t *block1, const uint8_t *block2) {
+    for (int i = 0; i < BLOCK_SIZE; i++) {
+        output[i] = block1[i] ^ block2[i];
+    }
+}
+
+int main() {
+    uint8_t key[BLOCK_SIZE] = {0x1, 0x2, 0x3, 0x4, 0x5, 0x6, 0x7, 0x8, 0x9, 0xa, 0xb, 0xc, 0xd, 0xe, 0xf, 0x0};
+    uint8_t X[BLOCK_SIZE] = {0xa, 0xb, 0xc, 0xd, 0xe, 0xf, 0x0, 0x1, 0x2, 0x3, 0x4, 0x5, 0x6, 0x7, 0x8, 0x9};
+    uint8_t T[BLOCK_SIZE];
+    uint8_t X_XOR_T[BLOCK_SIZE];
+    uint8_t two_block_message[2 * BLOCK_SIZE];
+    uint8_t mac[BLOCK_SIZE];
+
+    // Compute CBC-MAC for one-block message X
+    compute_cbc_mac(T, key, X, 1);
+    printf("CBC-MAC of X: ");
+    for (int i = 0; i < BLOCK_SIZE; i++) {
+        printf("%02x", T[i]);
+    }
+    printf("\n");
+
+    // Compute X ⊕ T
+    xor_blocks(X_XOR_T, X, T);
+
+    // Construct the two-block message X || (X ⊕ T)
+    memcpy(two_block_message, X, BLOCK_SIZE);
+    memcpy(two_block_message + BLOCK_SIZE, X_XOR_T, BLOCK_SIZE);
+
+    // Compute CBC-MAC for the two-block message
+    compute_cbc_mac(mac, key, two_block_message, 2);
+    printf("CBC-MAC of X || (X ⊕ T): ");
+    for (int i = 0; i < BLOCK_SIZE; i++) {
+        printf("%02x", mac[i]);
+    }
+    printf("\n");
+
+    return 0;
+}

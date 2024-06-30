@@ -1,0 +1,74 @@
+#include <stdio.h>
+#include <string.h>
+#include <stdlib.h>
+
+// Function to encrypt the plaintext with the given key stream
+void encrypt(char *plaintext, int *key, char *ciphertext, int length) {
+    for (int i = 0; i < length; i++) {
+        if (plaintext[i] == ' ') {
+            ciphertext[i] = ' ';
+        } else {
+            ciphertext[i] = ((plaintext[i] - 'a' + key[i]) % 26) + 'a';
+        }
+    }
+    ciphertext[length] = '\0';
+}
+
+// Function to decrypt the ciphertext with the given key stream
+void decrypt(char *ciphertext, int *key, char *plaintext, int length) {
+    for (int i = 0; i < length; i++) {
+        if (ciphertext[i] == ' ') {
+            plaintext[i] = ' ';
+        } else {
+            plaintext[i] = ((ciphertext[i] - 'a' - key[i] + 26) % 26) + 'a';
+        }
+    }
+    plaintext[length] = '\0';
+}
+
+// Function to find the key stream to decrypt ciphertext to given plaintext
+void findKey(char *ciphertext, char *targetPlaintext, int *key, int length) {
+    for (int i = 0; i < length; i++) {
+        if (ciphertext[i] == ' ') {
+            key[i] = -1;
+        } else {
+            key[i] = (ciphertext[i] - targetPlaintext[i] + 26) % 26;
+        }
+    }
+}
+
+int main() {
+    // Part (a): Encrypt the plaintext "send more money" with the key stream
+    char plaintext[] = "send more money";
+    int key[] = {9, 0, 1, 7, 23, 15, 21, 14, 11, 11, 2, 8, 9};
+    int length = strlen(plaintext);
+    char ciphertext[length + 1];
+
+    encrypt(plaintext, key, ciphertext, length);
+
+    printf("Ciphertext: %s\n", ciphertext);
+
+    // Part (b): Find the key to decrypt the ciphertext to "cash not needed"
+    char targetPlaintext[] = "cash not needed";
+    int newKey[length];
+
+    findKey(ciphertext, targetPlaintext, newKey, length);
+
+    printf("Key for decryption to 'cash not needed': ");
+    for (int i = 0; i < length; i++) {
+        if (newKey[i] != -1) {
+            printf("%d ", newKey[i]);
+        } else {
+            printf("  ");
+        }
+    }
+    printf("\n");
+
+    // Decrypt using the new key to verify
+    char decryptedPlaintext[length + 1];
+    decrypt(ciphertext, newKey, decryptedPlaintext, length);
+
+    printf("Decrypted text: %s\n", decryptedPlaintext);
+
+    return 0;
+}

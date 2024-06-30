@@ -1,0 +1,49 @@
+#include <stdio.h>
+#include<string.h>
+
+int modInverse(int a, int m) {
+    a = a % m;
+    for (int x = 1; x < m; x++) {
+        if ((a * x) % m == 1) {
+            return x;
+        }
+    }
+    return -1; // No inverse exists
+}
+
+void affine_caesar_encrypt(char *plaintext, int a, int b) {
+    int n = 26; // Number of characters in the alphabet
+    char ciphertext[100];
+    
+    for (int i = 0; plaintext[i] != '\0'; i++) {
+        char current_char = plaintext[i];
+        
+        if (current_char >= 'A' && current_char <= 'Z') {
+            ciphertext[i] = ((a * (current_char - 'A') + b) % n) + 'A';
+        } else if (current_char >= 'a' && current_char <= 'z') {
+            ciphertext[i] = ((a * (current_char - 'a') + b) % n) + 'a';
+        } else {
+            ciphertext[i] = current_char; // Leave non-alphabetic characters unchanged
+        }
+    }
+    
+    ciphertext[strlen(plaintext)] = '\0';
+    printf("Encrypted Text: %s\n", ciphertext);
+}
+
+int main() {
+    char plaintext[] = "Hello, world!";
+    int a = 5; // Example value for a
+    int b = 8; // Example value for b
+
+    int modInv = modInverse(a, 26);
+
+    if (modInv == -1) {
+        printf("Invalid 'a' value. Mod inverse does not exist.\n");
+        return 1;
+    }
+
+    affine_caesar_encrypt(plaintext, a, b);
+
+    return 0;
+}
